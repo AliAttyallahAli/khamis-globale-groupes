@@ -8,11 +8,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:9000",
+        target: "https://backend-kgg.onrender.com",
         changeOrigin: true,
       },
       "/socket.io": {
-        target: "http://localhost:9000",
+        target: "https://backend-kgg.onrender.com",
         ws: true,
       },
     },
