@@ -2,13 +2,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   Plus, Edit, Trash2, AlertTriangle, Package,
-  RefreshCw, Image as ImageIcon, Eye, Star,
+  RefreshCw, Image as ImageIcon, Eye, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { produitsApi } from '../api/produits.api';
 import { categoriesApi } from '../api/categories.api';
 import { boutiquesApi } from '../api/boutiques.api';
+import { partenairesApi } from '../api/partenaires.api';
 import { useAuth } from '../context/AuthContext';
 import { formatCFA } from '../utils/formatters';
 
@@ -35,6 +36,7 @@ const EMPTY_FORM = {
   description: '',
   category_id: '',
   boutique_id: '',
+  partenaire_id: '',      // ✅
   prix_partenaire: '',
   prix_vente: '',
   stock: 0,
@@ -50,6 +52,7 @@ export default function Produits() {
   const [produits, setProduits] = useState([]);
   const [categories, setCategories] = useState([]);
   const [boutiques, setBoutiques] = useState([]);
+  const [partenaires, setPartenaires] = useState([]);      // ✅
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -58,6 +61,7 @@ export default function Produits() {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [boutiqueId, setBoutiqueId] = useState('');
+  const [partenaireFilter, setPartenaireFilter] = useState('');   // ✅
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
   // ─────────────────────────────────────────────
@@ -66,8 +70,8 @@ export default function Produits() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [imageFiles, setImageFiles] = useState([]);        // File[] nouveaux
-  const [existingImages, setExistingImages] = useState([]); // images déjà en base
+  const [imageFiles, setImageFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [saving, setSaving] = useState(false);
 
   // ─────────────────────────────────────────────
@@ -78,14 +82,19 @@ export default function Produits() {
   const [detail, setDetail] = useState(null);
 
   // ─────────────────────────────────────────────
-  // Chargement dépendances (catégories + boutiques)
+  // Chargement dépendances (catégories + boutiques + partenaires)
   // ─────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
       categoriesApi.list({ is_active: 1 }).then((d) => d.data || []),
       boutiquesApi.list({ is_active: 1, limit: 500 }).then((d) => d.data || []),
+      partenairesApi.options().then((d) => d.data || []).catch(() => []),    // ✅
     ])
-      .then(([cats, bs]) => { setCategories(cats); setBoutiques(bs); })
+      .then(([cats, bs, parts]) => {
+        setCategories(cats);
+        setBoutiques(bs);
+        setPartenaires(parts);
+      })
       .catch(console.warn);
   }, []);
 
@@ -101,6 +110,7 @@ export default function Produits() {
         search: search || undefined,
         category_id: categoryId || undefined,
         boutique_id: boutiqueId || undefined,
+        partenaire_id: partenaireFilter || undefined,      // ✅
         low_stock: lowStockOnly ? 1 : undefined,
         is_active: 1,
       };
@@ -109,11 +119,11 @@ export default function Produits() {
       setTotalPages(data.pagination.totalPages);
       setTotal(data.pagination.total);
     } catch (err) {
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(err.response?.data?.error || 'Erreur lors du chargement des produits');
     } finally {
       setLoading(false);
     }
-  }, [page, search, categoryId, boutiqueId, lowStockOnly]);
+  }, [page, search, categoryId, boutiqueId, partenaireFilter, lowStockOnly]);
 
   useEffect(() => { fetchProduits(); }, [fetchProduits]);
 
@@ -139,6 +149,7 @@ export default function Produits() {
       description: p.description || '',
       category_id: p.category_id,
       boutique_id: p.boutique_id,
+      partenaire_id: p.partenaire_id || '',      // ✅
       prix_partenaire: p.prix_partenaire,
       prix_vente: p.prix_vente,
       stock: p.stock,
@@ -147,7 +158,6 @@ export default function Produits() {
     setImageFiles([]);
     setModalOpen(true);
 
-    // Charger les images complètes depuis l'API détail
     try {
       const res = await produitsApi.get(p.id);
       setExistingImages(res.produit.images || []);
@@ -164,19 +174,18 @@ export default function Produits() {
     setSaving(true);
     try {
       if (editing) {
-        // 1. Mise à jour des infos produit (JSON)
         await produitsApi.update(editing.id, {
           name: form.name,
           description: form.description || undefined,
           category_id: parseInt(form.category_id, 10),
           boutique_id: parseInt(form.boutique_id, 10),
+          partenaire_id: form.partenaire_id ? parseInt(form.partenaire_id, 10) : null,   // ✅
           prix_partenaire: parseInt(form.prix_partenaire, 10),
           prix_vente: parseInt(form.prix_vente, 10),
           stock: parseInt(form.stock, 10) || 0,
           seuil_alerte: parseInt(form.seuil_alerte, 10) || 10,
         });
 
-        // 2. Ajout des nouvelles images (multipart)
         if (imageFiles.length > 0) {
           const fd = new FormData();
           imageFiles.forEach((f) => fd.append('images', f));
@@ -185,13 +194,13 @@ export default function Produits() {
 
         toast.success('Produit modifié');
       } else {
-        // Création : multipart avec images
         const fd = new FormData();
         fd.append('name', form.name);
         if (form.reference) fd.append('reference', form.reference);
         if (form.description) fd.append('description', form.description);
         fd.append('category_id', form.category_id);
         fd.append('boutique_id', form.boutique_id);
+        if (form.partenaire_id) fd.append('partenaire_id', form.partenaire_id);   // ✅
         fd.append('prix_partenaire', form.prix_partenaire);
         fd.append('prix_vente', form.prix_vente);
         if (form.stock !== '') fd.append('stock', form.stock);
@@ -319,9 +328,9 @@ export default function Produits() {
       render: (r) => (
         <div>
           <div className="font-medium">{r.name}</div>
-          {r.images?.length > 1 && (
-            <div className="text-[10px] text-slate-400 mt-0.5">
-              {r.images.length} image(s)
+          {r.partenaire_name && (
+            <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+              <Building2 size={10} /> {r.partenaire_name}
             </div>
           )}
         </div>
@@ -341,8 +350,23 @@ export default function Produits() {
     },
     { key: 'boutique_name', label: 'Boutique' },
     {
+      key: 'partenaire_name',
+      label: 'Partenaire',      // ✅ NOUVELLE COLONNE
+      render: (r) =>
+        r.partenaire_name ? (
+          <div>
+            <div className="text-xs font-medium text-slate-700">{r.partenaire_name}</div>
+            {r.partenaire_code && (
+              <div className="text-[10px] text-slate-400 font-mono">{r.partenaire_code}</div>
+            )}
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400 italic">—</span>
+        ),
+    },
+    {
       key: 'prix_partenaire',
-      label: 'Prix partenaire',
+      label: 'Prix part.',
       align: 'right',
       render: (r) => formatCFA(r.prix_partenaire),
     },
@@ -450,7 +474,7 @@ export default function Produits() {
         onSearchChange={(v) => { setSearch(v); setPage(1); }}
         onReset={() => {
           setSearch(''); setCategoryId(''); setBoutiqueId('');
-          setLowStockOnly(false); setPage(1);
+          setPartenaireFilter(''); setLowStockOnly(false); setPage(1);
         }}
       >
         <select
@@ -471,6 +495,16 @@ export default function Produits() {
           <option value="">Toutes boutiques</option>
           {boutiques.map((b) => (
             <option key={b.id} value={b.id}>{b.name}</option>
+          ))}
+        </select>
+        <select
+          value={partenaireFilter}
+          onChange={(e) => { setPartenaireFilter(e.target.value); setPage(1); }}
+          className="px-3 py-2 rounded-lg border border-slate-200 text-sm"
+        >
+          <option value="">Tous partenaires</option>
+          {partenaires.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
         <label className="flex items-center gap-2 text-sm text-slate-600 px-2 cursor-pointer">
@@ -546,6 +580,29 @@ export default function Produits() {
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </Select>
+
+            {/* ✅ Partenaire */}
+            <div className="md:col-span-2">
+              <Select
+                label="Partenaire / Fournisseur"
+                value={form.partenaire_id}
+                onChange={(e) => setForm({ ...form, partenaire_id: e.target.value })}
+              >
+                <option value="">— Aucun partenaire —</option>
+                {partenaires.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.company_name && p.company_name !== p.name ? ` (${p.company_name})` : ''}
+                    {p.phone ? ` — ${p.phone}` : ''}
+                  </option>
+                ))}
+              </Select>
+              {partenaires.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  ⚠️ Aucun partenaire disponible. Créez-en un dans /partenaires.
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Prix + marge */}
@@ -681,6 +738,25 @@ export default function Produits() {
                 <p className="text-xs font-mono text-slate-500 mt-1">{detail.reference}</p>
               </div>
 
+              {/* ✅ Partenaire */}
+              {detail.partenaire_name && (
+                <div className="p-3 rounded-xl bg-white border border-slate-200">
+                  <p className="text-xs text-slate-500 uppercase font-medium mb-1 flex items-center gap-1">
+                    <Building2 size={12} /> Partenaire / Fournisseur
+                  </p>
+                  <p className="text-sm font-semibold text-slate-800">{detail.partenaire_name}</p>
+                  {detail.partenaire_code && (
+                    <p className="text-xs text-slate-400 font-mono">{detail.partenaire_code}</p>
+                  )}
+                  {detail.partenaire_phone && (
+                    <p className="text-xs text-slate-500 mt-1">📞 {detail.partenaire_phone}</p>
+                  )}
+                  {detail.partenaire_email && (
+                    <p className="text-xs text-slate-500">✉️ {detail.partenaire_email}</p>
+                  )}
+                </div>
+              )}
+
               {detail.description && (
                 <p className="text-sm text-slate-600">{detail.description}</p>
               )}
@@ -745,7 +821,7 @@ export default function Produits() {
   );
 
   // ─────────────────────────────────────────────
-  // Handler interne safe (n'appelle handleRemoveExisting que si on édite)
+  // Handler interne safe
   // ─────────────────────────────────────────────
   function handleRemoveImageSafe(imageId) {
     if (!editing) {

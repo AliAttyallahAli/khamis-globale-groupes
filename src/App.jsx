@@ -42,13 +42,17 @@ const Produits           = lazy(() => import('./pages/Produits'));
 const Commandes          = lazy(() => import('./pages/Commandes'));
 const Ventes             = lazy(() => import('./pages/Ventes'));
 const Ravitaillements    = lazy(() => import('./pages/Ravitaillements'));
-
+const AdminLivreurs = lazy(() => import('./pages/AdminLivreurs'));
+const AdminLivreurDetail = lazy(() => import('./pages/AdminLivreurDetail'));
+const Livraisons = lazy(() => import('./pages/Livraisons'));
 // Personnel & finance
 const Personnel          = lazy(() => import('./pages/Personnel'));
 const PersonnelDetail    = lazy(() => import('./pages/PersonnelDetail'));
 const Paiements          = lazy(() => import('./pages/Paiements'));
 const Charges            = lazy(() => import('./pages/Charges'));
 const AgentVentes        = lazy(() => import('./pages/AgentVentes'));
+const Partenaires = lazy(() => import('./pages/Partenaires'));
+const PartenaireDetail = lazy(() => import('./pages/PartenaireDetail'));
 
 // Rapports & paramètres
 const Rapports           = lazy(() => import('./pages/Rapports'));
@@ -148,6 +152,8 @@ export default function App() {
                       <Route path="/boutiques" element={<Boutiques />} />
                       <Route path="/ravitaillements" element={<Ravitaillements />} />
                       <Route path="/mes-performances" element={<AgentVentes />} />
+                      <Route path="/livraisons" element={<Livraisons />} />
+
 
                     </Route>
 
@@ -166,6 +172,8 @@ export default function App() {
                       <Route path="/personnel/:id" element={<PersonnelDetail />} />
                       <Route path="/paiements" element={<Paiements />} />
                       <Route path="/charges" element={<Charges />} />
+                      <Route path="/partenaires" element={<Partenaires />} />
+                      <Route path="/partenaires/:id" element={<PartenaireDetail />} />
                     </Route>
 
                     {/* ───────────────────────────── */}
@@ -179,6 +187,8 @@ export default function App() {
                       <Route path="/admin/agents" element={<AdminAgents />} />
                       <Route path="/admin/agents/:id" element={<AdminAgentDetail />} />
                       <Route path="/admin/help" element={<AdminHelp />} />
+                      <Route path="/admin/livreurs" element={<AdminLivreurs />} />
+                      <Route path="/admin/livreurs/:id" element={<AdminLivreurDetail />} />
 
                     </Route>
 

@@ -121,6 +121,24 @@ const MENU_GROUPS = [
         roles: ['admin', 'gerant'],
       },
       {
+        to: '/livraisons',
+        label: 'Livraisons',
+        icon: Truck,
+        roles: ['admin', 'gerant'],
+      },
+      {
+        to: '/partenaires',
+        label: 'Partenaires',
+        icon: Building2,
+        roles: ['admin', 'gerant'],
+      },
+      {
+        to: '/admin/livreurs',
+        label: 'Livreurs',
+        icon: UserCircle2,   // ou Bike de lucide-react
+        roles: ['admin'],
+      },
+      {
         to: '/paiements',
         label: 'Paiements',
         icon: Wallet,
@@ -177,27 +195,30 @@ const MENU_GROUPS = [
 // PREFETCH MAP
 // ═══════════════════════════════════════════════
 const PREFETCH_MAP = {
-  '/dashboard':         () => import('../../pages/Dashboard'),
-  '/market':            () => import('../../pages/Market'),
-  '/produits':          () => import('../../pages/Produits'),
-  '/commandes':         () => import('../../pages/Commandes'),
-  '/ventes':            () => import('../../pages/Ventes'),
-  '/mes-performances':  () => import('../../pages/AgentVentes'),
-  '/ravitaillements':   () => import('../../pages/Ravitaillements'),
-  '/boutiques':         () => import('../../pages/Boutiques'),
-  '/categories':        () => import('../../pages/Categories'),
-  '/departements':      () => import('../../pages/Departements'),
-  '/utilisateurs':      () => import('../../pages/Utilisateurs'),
-  '/admin/agents':      () => import('../../pages/AdminAgents'),       // ✅ ajouté
-  '/personnel':         () => import('../../pages/Personnel'),
-  '/paiements':         () => import('../../pages/Paiements'),
-  '/charges':           () => import('../../pages/Charges'),
-  '/alkherpay':         () => import('../../pages/AlkherPay'),
-  '/rapports':          () => import('../../pages/Rapports'),
-  '/notifications':     () => import('../../pages/Notifications'),
-  '/aide':              () => import('../../pages/HelpCenter'),
-  '/parametres':        () => import('../../pages/Parametres'),
-  '/profil':            () => import('../../pages/Profil'),
+  '/dashboard': () => import('../../pages/Dashboard'),
+  '/market': () => import('../../pages/Market'),
+  '/produits': () => import('../../pages/Produits'),
+  '/commandes': () => import('../../pages/Commandes'),
+  '/ventes': () => import('../../pages/Ventes'),
+  '/mes-performances': () => import('../../pages/AgentVentes'),
+  '/ravitaillements': () => import('../../pages/Ravitaillements'),
+  '/boutiques': () => import('../../pages/Boutiques'),
+  '/categories': () => import('../../pages/Categories'),
+  '/departements': () => import('../../pages/Departements'),
+  '/utilisateurs': () => import('../../pages/Utilisateurs'),
+  '/admin/agents': () => import('../../pages/AdminAgents'),       // ✅ ajouté
+  '/personnel': () => import('../../pages/Personnel'),
+  '/paiements': () => import('../../pages/Paiements'),
+  '/charges': () => import('../../pages/Charges'),
+  '/alkherpay': () => import('../../pages/AlkherPay'),
+  '/rapports': () => import('../../pages/Rapports'),
+  '/notifications': () => import('../../pages/Notifications'),
+  '/aide': () => import('../../pages/HelpCenter'),
+  '/parametres': () => import('../../pages/Parametres'),
+  '/profil': () => import('../../pages/Profil'),
+  '/livraisons': () => import('../../pages/Livraisons'),
+  '/admin/livreurs': () => import('../../pages/AdminLivreurs'),
+  '/partenaires': () => import('../../pages/Partenaires'),
 };
 
 const prefetchedPaths = new Set();
@@ -241,8 +262,8 @@ function SidebarLink({ item, onClick, badges }) {
       className={({ isActive }) =>
         `group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
          ${isActive
-           ? 'bg-white/15 text-white font-medium'
-           : 'text-white/70 hover:bg-white/5 hover:text-white'}`
+          ? 'bg-white/15 text-white font-medium'
+          : 'text-white/70 hover:bg-white/5 hover:text-white'}`
       }
     >
       <Icon size={18} className="flex-shrink-0" />
